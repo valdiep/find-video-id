@@ -77,119 +77,31 @@ function extractYouTubeVideoId(input: string) {
   };
 }
 
-function getThumbnailOptions(videoId: string) {
-  return [
-    {
-      label: "Max resolution",
-      size: "1280×720",
-      url: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
-    },
-    {
-      label: "Standard definition",
-      size: "640×480",
-      url: `https://img.youtube.com/vi/${videoId}/sddefault.jpg`,
-    },
-    {
-      label: "High quality",
-      size: "480×360",
-      url: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
-    },
-    {
-      label: "Medium quality",
-      size: "320×180",
-      url: `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`,
-    },
-  ];
-}
-
-function slugifyLabel(label: string) {
-  return label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-}
-
-function getDownloadUrl(imageUrl: string, filename: string) {
-  return `/api/download-thumbnail?url=${encodeURIComponent(imageUrl)}&filename=${encodeURIComponent(
-    filename
-  )}`;
-}
-
-type ChannelLookupResult =
-  | { ok: true; channelId: string }
-  | { ok: false; error: string }
-  | null;
-
-export default function HomePage() {
+export default function YouTubeVideoIdClient() {
   const [input, setInput] = useState("");
   const [submitted, setSubmitted] = useState("");
-  const [copiedVideo, setCopiedVideo] = useState(false);
-  const [copiedChannel, setCopiedChannel] = useState(false);
-  const [channelLoading, setChannelLoading] = useState(false);
-  const [channelResult, setChannelResult] = useState<ChannelLookupResult>(null);
+  const [copied, setCopied] = useState(false);
 
-  const videoResult = useMemo(() => extractYouTubeVideoId(submitted), [submitted]);
-  const thumbnails = videoResult.ok ? getThumbnailOptions(videoResult.id) : [];
+  const result = useMemo(() => extractYouTubeVideoId(submitted), [submitted]);
 
   const examples = [
-    "https://www.youtube.com/@MrBeast",
     "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     "https://youtu.be/dQw4w9WgXcQ",
+    "https://www.youtube.com/shorts/dQw4w9WgXcQ",
   ];
 
-  const handleSubmit = async (value?: string) => {
+  const handleSubmit = (value?: string) => {
     const finalInput = (value ?? input).trim();
-
     setSubmitted(finalInput);
-    setCopiedVideo(false);
-    setCopiedChannel(false);
-    setChannelResult(null);
-
-    if (!finalInput) return;
-
-    setChannelLoading(true);
-
-    try {
-      const res = await fetch("/api/channel-id", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ input: finalInput }),
-      });
-
-      const data = await res.json();
-
-      if (data.ok && data.channelId) {
-        setChannelResult({ ok: true, channelId: data.channelId });
-      } else {
-        setChannelResult({
-          ok: false,
-          error: data.error || "Could not find channel ID.",
-        });
-      }
-    } catch {
-      setChannelResult({
-        ok: false,
-        error: "Channel ID lookup failed.",
-      });
-    } finally {
-      setChannelLoading(false);
-    }
+    setCopied(false);
   };
 
-  const handleCopyVideo = async () => {
-    if (!videoResult.ok) return;
+  const handleCopy = async () => {
+    if (!result.ok) return;
     try {
-      await navigator.clipboard.writeText(videoResult.id);
-      setCopiedVideo(true);
-      window.setTimeout(() => setCopiedVideo(false), 1500);
-    } catch {}
-  };
-
-  const handleCopyChannel = async () => {
-    if (!channelResult || !channelResult.ok) return;
-    try {
-      await navigator.clipboard.writeText(channelResult.channelId);
-      setCopiedChannel(true);
-      window.setTimeout(() => setCopiedChannel(false), 1500);
+      await navigator.clipboard.writeText(result.id);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
     } catch {}
   };
 
@@ -200,22 +112,22 @@ export default function HomePage() {
           <div>
             <div className="text-xl font-bold tracking-tight">Find Video ID</div>
             <div className="text-sm text-slate-500">
-              YouTube Channel ID Finder, Video ID Finder & Thumbnail Downloader
+              YouTube Video ID Finder
             </div>
           </div>
 
           <div className="hidden gap-3 md:flex">
             <Link
-              href="/youtube-channel-id"
-              className="rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700"
-            >
-              Channel ID Tool
-            </Link>
-            <Link
-              href="/youtube-video-id"
+              href="/"
               className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             >
-              Video ID Tool
+              Home
+            </Link>
+            <Link
+              href="/youtube-channel-id"
+              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            >
+              Channel ID Tool
             </Link>
             <Link
               href="/youtube-thumbnail-downloader"
@@ -234,12 +146,11 @@ export default function HomePage() {
           </div>
 
           <h1 className="mt-5 text-4xl font-bold tracking-tight md:text-6xl">
-            Find YouTube Channel IDs, Video IDs, and thumbnails in seconds
+            Find YouTube Video IDs in seconds
           </h1>
 
           <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-slate-600">
-            Paste a YouTube channel link, @handle, or video URL to find the Channel ID.
-            You can also extract the Video ID and get thumbnail links from the same input.
+            Paste a YouTube video URL to extract the Video ID instantly.
           </p>
 
           <div className="mx-auto mt-10 max-w-3xl rounded-[28px] border border-slate-200 bg-white p-6 text-left shadow-sm">
@@ -254,18 +165,18 @@ export default function HomePage() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
-                    void handleSubmit();
+                    handleSubmit();
                   }
                 }}
-                placeholder="https://www.youtube.com/@MrBeast"
+                placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
                 className="w-full rounded-2xl border border-slate-300 px-4 py-3.5 text-sm outline-none transition focus:border-slate-900"
               />
 
               <button
-                onClick={() => void handleSubmit()}
+                onClick={() => handleSubmit()}
                 className="rounded-2xl bg-slate-900 px-5 py-3.5 text-sm font-medium text-white shadow-sm transition hover:opacity-95"
               >
-                {channelLoading ? "Finding IDs..." : "Find IDs"}
+                Find Video ID
               </button>
             </div>
 
@@ -275,7 +186,7 @@ export default function HomePage() {
                   key={example}
                   onClick={() => {
                     setInput(example);
-                    void handleSubmit(example);
+                    handleSubmit(example);
                   }}
                   className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-600 transition hover:border-slate-900 hover:text-slate-900"
                 >
@@ -288,16 +199,9 @@ export default function HomePage() {
           <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row sm:flex-wrap">
             <Link
               href="/youtube-channel-id"
-              className="inline-flex items-center justify-center rounded-2xl bg-red-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-red-700"
-            >
-              Channel ID Tool
-            </Link>
-
-            <Link
-              href="/youtube-video-id"
               className="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-6 py-3 text-base font-semibold text-slate-900 transition hover:bg-slate-50"
             >
-              Video ID Tool
+              Channel ID Tool
             </Link>
 
             <Link
@@ -314,51 +218,14 @@ export default function HomePage() {
         <div className="grid gap-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Channel ID
-            </div>
-
-            {!submitted ? (
-              <div className="mt-3 text-sm text-slate-600">
-                Paste a YouTube channel URL, @handle, or video URL above.
-              </div>
-            ) : channelLoading ? (
-              <div className="mt-3 text-sm text-slate-600">Looking up channel ID...</div>
-            ) : channelResult?.ok ? (
-              <div className="mt-3 space-y-3">
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
-                  Channel ID found
-                </div>
-
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <code className="break-all rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800">
-                    {channelResult.channelId}
-                  </code>
-
-                  <button
-                    onClick={handleCopyChannel}
-                    className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
-                  >
-                    {copiedChannel ? "Copied" : "Copy Channel ID"}
-                  </button>
-                </div>
-              </div>
-            ) : channelResult && !channelResult.ok ? (
-              <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                {channelResult.error}
-              </div>
-            ) : null}
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               Video ID
             </div>
 
             {!submitted ? (
               <div className="mt-3 text-sm text-slate-600">
-                If your input contains a video, the Video ID will appear here too.
+                Paste a YouTube video URL above to extract the Video ID.
               </div>
-            ) : videoResult.ok ? (
+            ) : result.ok ? (
               <div className="mt-3 space-y-3">
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
                   Video ID found
@@ -366,20 +233,20 @@ export default function HomePage() {
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <code className="break-all rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800">
-                    {videoResult.id}
+                    {result.id}
                   </code>
 
                   <button
-                    onClick={handleCopyVideo}
+                    onClick={handleCopy}
                     className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
                   >
-                    {copiedVideo ? "Copied" : "Copy Video ID"}
+                    {copied ? "Copied" : "Copy Video ID"}
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="mt-3 text-sm text-slate-600">
-                No video ID found from this input.
+              <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                {result.error}
               </div>
             )}
           </div>
@@ -387,66 +254,109 @@ export default function HomePage() {
       </section>
 
       <section className="mx-auto max-w-5xl px-6 pb-10 md:px-10">
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
-                Thumbnail downloader
-              </h2>
-              <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-600">
-                When your input contains a video, thumbnail downloads will appear below.
+        <div className="grid gap-6">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+              YouTube Video ID Finder – Extract a Video ID from Any YouTube Link
+            </h2>
+            <div className="mt-4 grid gap-4 text-sm leading-7 text-slate-600">
+              <p>
+                This free YouTube video ID finder helps you quickly extract the 11-character video
+                ID from any YouTube URL. Paste a standard watch link, Shorts URL, youtu.be share
+                link, embed URL, or live link to get the video ID instantly.
+              </p>
+              <p>
+                If you also need other YouTube tools, try the{" "}
+                <Link
+                  href="/youtube-channel-id"
+                  className="font-medium text-slate-900 underline underline-offset-4"
+                >
+                  YouTube Channel ID Finder
+                </Link>{" "}
+                or the{" "}
+                <Link
+                  href="/youtube-thumbnail-downloader"
+                  className="font-medium text-slate-900 underline underline-offset-4"
+                >
+                  YouTube Thumbnail Downloader
+                </Link>
+                .
               </p>
             </div>
-
-            <Link
-              href="/youtube-thumbnail-downloader"
-              className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-            >
-              Open dedicated thumbnail page
-            </Link>
           </div>
 
-          {!videoResult.ok ? (
-            <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
-              No thumbnail preview is available until the input includes a valid video.
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+              How to Find a YouTube Video ID
+            </h2>
+            <div className="mt-4 grid gap-4 text-sm leading-7 text-slate-600">
+              <p>1. Paste a YouTube URL into the tool.</p>
+              <p>2. Click Find Video ID.</p>
+              <p>3. Copy the extracted YouTube video ID.</p>
+              <p>
+                A YouTube video ID is commonly used for embeds, APIs, thumbnail URLs, analytics,
+                and video tracking.
+              </p>
             </div>
-          ) : (
-            <div className="mt-6 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
-              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-                <img
-                  src={thumbnails[0].url}
-                  alt={`Thumbnail preview for ${videoResult.id}`}
-                  className="h-full w-full object-cover"
-                />
+          </div>
+
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+              YouTube Video ID Finder FAQs
+            </h2>
+
+            <div className="mt-6 grid gap-4">
+              <div className="rounded-2xl border border-slate-200 p-4">
+                <h3 className="text-base font-semibold text-slate-900">
+                  What is a YouTube video ID?
+                </h3>
+                <p className="mt-2 text-sm leading-7 text-slate-600">
+                  A YouTube video ID is the unique 11-character code used to identify a specific
+                  YouTube video.
+                </p>
               </div>
 
-              <div className="grid gap-3">
-                {thumbnails.map((thumb) => {
-                  const filename = `${videoResult.id}-${slugifyLabel(thumb.label)}.jpg`;
+              <div className="rounded-2xl border border-slate-200 p-4">
+                <h3 className="text-base font-semibold text-slate-900">
+                  How many characters is a YouTube video ID?
+                </h3>
+                <p className="mt-2 text-sm leading-7 text-slate-600">
+                  A YouTube video ID is normally 11 characters long and can contain letters,
+                  numbers, underscores, and hyphens.
+                </p>
+              </div>
 
-                  return (
-                    <div
-                      key={thumb.url}
-                      className="flex flex-col gap-3 rounded-2xl border border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between"
-                    >
-                      <div>
-                        <div className="text-sm font-semibold text-slate-900">{thumb.label}</div>
-                        <div className="mt-1 text-xs text-slate-500">{thumb.size}</div>
-                        <div className="mt-1 break-all text-xs text-slate-500">{thumb.url}</div>
-                      </div>
+              <div className="rounded-2xl border border-slate-200 p-4">
+                <h3 className="text-base font-semibold text-slate-900">
+                  Can I get a video ID from a Shorts link?
+                </h3>
+                <p className="mt-2 text-sm leading-7 text-slate-600">
+                  Yes. This tool supports YouTube Shorts URLs and extracts the video ID from them
+                  automatically.
+                </p>
+              </div>
 
-                      <a
-                        href={getDownloadUrl(thumb.url, filename)}
-                        className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:opacity-95"
-                      >
-                        Download thumbnail
-                      </a>
-                    </div>
-                  );
-                })}
+              <div className="rounded-2xl border border-slate-200 p-4">
+                <h3 className="text-base font-semibold text-slate-900">
+                  Can I extract a video ID from a youtu.be link?
+                </h3>
+                <p className="mt-2 text-sm leading-7 text-slate-600">
+                  Yes. You can paste a youtu.be short link and the tool will return the correct
+                  YouTube video ID.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 p-4">
+                <h3 className="text-base font-semibold text-slate-900">
+                  What can I use a YouTube video ID for?
+                </h3>
+                <p className="mt-2 text-sm leading-7 text-slate-600">
+                  You can use a YouTube video ID for embeds, API requests, thumbnail generation,
+                  automation workflows, and video tracking.
+                </p>
               </div>
             </div>
-          )}
+          </div>
         </div>
       </section>
 
