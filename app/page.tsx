@@ -311,6 +311,65 @@ export default function HomePage() {
       </section>
 
       <section className="mx-auto max-w-5xl px-6 py-10 md:px-10">
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+          <div className="max-w-3xl">
+            <h2 className="text-2xl font-bold tracking-tight md:text-3xl">YouTube Tools</h2>
+            <p className="mt-2 text-sm leading-7 text-slate-600">
+              Use these free YouTube tools to find video IDs, channel IDs, and download
+              thumbnails from YouTube links.
+            </p>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <Link
+                href="/youtube-video-id"
+                className="text-base font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4 transition hover:text-red-600 hover:decoration-red-300"
+              >
+                YouTube Video ID Finder
+              </Link>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Extract the video ID from any YouTube video, Shorts, live, embed, or youtu.be URL.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <Link
+                href="/youtube-channel-id"
+                className="text-base font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4 transition hover:text-red-600 hover:decoration-red-300"
+              >
+                YouTube Channel ID Finder
+              </Link>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Find the unique YouTube channel ID from a channel link, @handle, or video URL.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <Link
+                href="/youtube-thumbnail-downloader"
+                className="text-base font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4 transition hover:text-red-600 hover:decoration-red-300"
+              >
+                YouTube Thumbnail Downloader
+              </Link>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Download YouTube video thumbnails in max resolution, HD, medium, and standard sizes.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-5">
+              <div className="text-base font-semibold text-slate-500">
+                YouTube Playlist ID Finder
+              </div>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Coming soon: get the playlist ID from any YouTube playlist URL.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-5xl px-6 pb-10 md:px-10">
         <div className="grid gap-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
